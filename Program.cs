@@ -1,17 +1,21 @@
 using ContosoPizza.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-
+var cstr = builder.Configuration.GetConnectionString("ContosoPizza");
 // Add the "ContosoPizza" connection string to
 // Secrets Manager (secrets.json or dotnet user-secrets set)
 // before you run the app!
+//builder.Services.AddDbContext<ContosoPizzaContext>(options =>
+//    options
+//        .use(cstr, ServerVersion.AutoDetect(cstr)));
+
 builder.Services.AddDbContext<ContosoPizzaContext>(options =>
-    options
-        .UseSqlServer(builder.Configuration.GetConnectionString("ContosoPizza")));
+        options.UseNpgsql(cstr));
 
 var app = builder.Build();
 
@@ -31,5 +35,16 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapRazorPages();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<ContosoPizzaContext>();
+    if (context.Database.GetPendingMigrations().Any())
+    {
+        context.Database.Migrate();
+    }
+}
 
 app.Run();

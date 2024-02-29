@@ -1,0 +1,24 @@
+version: '3'
+services:
+  db: # the service hosting your MySQL instance
+    image: postgres:alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: Passme_123
+    networks:
+      - app-network
+    ports:
+      - "5432:5432" # Map container port 5432 to host port 5432
+
+  webapp:
+    image: webapp:postgres3
+    networks: 
+      - app-network
+    ports: 
+      - "9022:80"
+    depends_on:
+      - db
+
+networks:
+  app-network:
+    driver: bridge
